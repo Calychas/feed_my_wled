@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Feed My WLED</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="feed-my-wled">Feed My WLED</h1>
+<p>A Python script that transforms an audio stream to feed WLED over the air using its audio-reactive feature.</p>
+<h2 id="why">Why?</h2>
+<p>Version 0.15 (&quot;Kösen&quot;) of <a href="https://github.com/Aircoookie/WLED.git">WLED</a> comes with a built-in audio-reactive feature, which was previously a fork. But how can you use it? At first glance, all I found was usage via analog/digital microphones or wired add-ons. Really? That was never an option for me because I don’t want background noise displayed on my LED strip, and I’m certainly not going to lay another cable around the room. After digging into the source code, it turns out WLED accepts specialized UDP packets (WARSL2 Protocol). On Windows, you may use this: <a href="https://github.com/Victoare/SR-WLED-audio-server-win">WledSRServer</a>. But what if you use Mac or Linux? That’s why I created this script, which can be fed with an audio stream and outputs the right data as a network UDP stream to your WLED strip.</p>
+<h2 id="working-principle-on-macos">Working Principle on macOS</h2>
+<ul>
+<li>Play some music (e.g., Apple Music) and share audio with your regular output AND Shairport-Sync.</li>
+<li>Configure Shairport-Sync to output audio as a FIFO stream — this can be done on the same Mac.</li>
+<li>Feed your stream to <code>feed_my_wled.py</code>.</li>
+<li>WLED receives your stream and reacts to audio by choosing sound-reactive effects.</li>
+</ul>
+<h2 id="working-principle-on-linux">Working Principle on Linux</h2>
+<p>To be honest, I know it will work but haven’t tested it yet. Here are some hints that might help:</p>
+<ul>
+<li>Install Shairport-Sync (or a loopback device) and play audio through it.</li>
+<li>Create a FIFO stream and pipe it to <code>feed_my_wled</code>.</li>
+</ul>
+<h2 id="how-it-works">How It Works</h2>
+<p><code>feed_my_wled.py</code> processes any (raw) audio stream:</p>
+<ul>
+<li>Reads the audio stream from stdin.</li>
+<li>Buffers the audio stream. The buffer length can be set—this feature helps with syncing. On a Mac, the stream is often ahead of the music on your speakers. Buffering resolves this issue, even during play/pause or skipping tracks.</li>
+<li>Calculates raw level (4B float).</li>
+<li>Calculates peak level (1B int).</li>
+<li>Calculates FFT for 16 bands, normalizes, and converts it to 1B int.</li>
+<li>Determines the dominant frequency.</li>
+<li>Calculates the magnitude sum.</li>
+<li>Creates a UDP packet with calculated data and fixed values (WARSL2 Protocol).</li>
+<li>Sends it to any WLED device on the same network (ESP32 recommended as a receiver).</li>
+</ul>
+<h2 id="preferences">Preferences</h2>
+<ul>
+<li><code>WLED_IP_ADDRESS</code>: IP address of your WLED device.</li>
+<li><code>WLED_UDP_PORT</code>: Port (default is 11988).</li>
+<li><code>sample_rate</code>: Sample rate of your audio stream. Shairport-Sync’s default is 88200 (it took me hours to figure this out!).</li>
+<li><code>buffer_size</code>: Default is 163840, creating a delay of ~1.5 seconds. Adjust this variable for perfect synchronization. Higher values result in more delay.</li>
+<li><code>chunk_size</code>: Bytes read by the script at once. Higher values improve mean calculations and reduce network bandwidth usage. The default is 8192, resulting in ~25 packets per second, which is sufficient for a fluid experience.</li>
+</ul>
+<h2 id="setup-on-a-mac">Setup (on a Mac)</h2>
+<p>I recommend using Homebrew for all installations.</p>
+<ol>
+<li>Install Python 3 and its dependencies (if not already installed):
+<ul>
+<li>numpy</li>
+<li>pyaudio</li>
+</ul>
+</li>
+<li>Download and install Shairport-Sync (link) on your Mac.</li>
+<li>Edit the Shairport-Sync config file (<code>/usr/local/etc/shairport-sync/shairport-sync.conf</code> on Mac) as follows:</li>
+</ol>
+<pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;general&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Shairport&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;output_backend&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;pipe&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;port&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">6000</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;ignore_volume_control&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;no&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;audio_backend_latency_offset_in_seconds&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.0</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;run_this_before_play_begins&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;&lt;path_to_your/feed_my_wled.py&gt;&quot;</span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;pipe&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/tmp/shairport-sync-audio&quot;</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<ol start="4">
+<li>Start Shairport (<code>-d</code> as daemon, <code>-k</code> to kill it): <code>shairport-sync -d</code></li>
+<li>Clone or download <code>feed_my_wled.py</code> and save it somewhere on your Mac.</li>
+<li>Pipe the stream to <code>feed_my_wled.py</code>: <code>cat /tmp/shairport-sync-audio | ./feed_my_wled.py</code></li>
+<li>Configure your WLED device:
+<ul>
+<li>Settings → WiFi: Disable WiFi sleep: OFF.</li>
+<li>Settings → Sync → Realtime: Enable Receive UDP Realtime.</li>
+<li>Settings → Usermod → AudioReactive: Enabled ON.</li>
+<li>Settings → Usermod → AudioReactive → Sync: Port: 11988.</li>
+<li>Settings → Usermod → AudioReactive → Sync: Mode: Receive.</li>
+<li>Reboot WLED Device.</li>
+<li>Main page: Select any audio-reactive effect, tweak the settings, and enjoy the show!</li>
+</ul>
+</li>
+</ol>
+<h3 id="about-me">About Me</h3>
+<p>This is my first project on GitHub and also my first &quot;real&quot; project written in Python, a language I’ve never used before. So, if you see something weird or unusual, please have mercy and let me know how I can improve. Regards, Chris</p>
+
+            
+            
+        </body>
+        </html>
