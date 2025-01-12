@@ -60,7 +60,7 @@ I recommend using Homebrew for all installations.
 ```
 
 4. Start Shairport (`-d` as daemon, `-k` to kill it): `shairport-sync -d`
-5. Clone or download `feed_my_wled.py` and save it somewhere on your Mac.
+5. Clone or download `feed_my_wled` and save it somewhere on your Mac.
 6. Pipe the stream to `feed_my_wled.py`: `cat /tmp/shairport-sync-audio | ./feed_my_wled.py`
 7. Configure your WLED device:
    * Settings → WiFi: Disable WiFi sleep: OFF.
@@ -70,6 +70,11 @@ I recommend using Homebrew for all installations.
    * Settings → Usermod → AudioReactive → Sync: Mode: Receive.
    * Reboot WLED Device.
    * Main page: Select any audio-reactive effect, tweak the settings, and enjoy the show!
+
+## Setup (on Linux)
+
+# `pactl load-module module-pipe-sink sink_name=wled file=/tmp/wled format=s16le rate=44100 channels=1`
+# `cat /tmp/wled | ./feed_my_wled.py`
 
 ### About Me
 This is my first project on GitHub and also my first "real" project written in Python, a language I’ve never used before. So, if you see something weird or unusual, please have mercy and let me know how I can improve. Regards, Chris
