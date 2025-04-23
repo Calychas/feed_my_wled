@@ -27,7 +27,7 @@ udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 ## functions
 # calculating fft
-def calculate_fft(audio_chunk, sample_rate):
+def calculate_fft(audio_chunk):
     """
     Calc FFT for a Audioblock
     :param audio_chunk: Audiodata as Byte-Array.
@@ -131,12 +131,14 @@ def stream_audio_to_wled():
             fft_data, raw_level, peak_level, fft_magnitude_sum, fft_peak_frequency = fft_result
 
             # Smooth the Peaks (Moving Average)
-            smoothed_level = (0.8 * previous_smoothed_level) + (0.2 * raw_level)
+            # smoothed_level = (0.8 * previous_smoothed_level) + (0.2 * raw_level)
+            smoothed_level = (0.2 * previous_smoothed_level) + (0.8 * raw_level)
             previous_smoothed_level = smoothed_level
 
             # Create UDP-Paket
             udp_packet = create_udp_packet(fft_data, raw_level, smoothed_level, peak_level, fft_magnitude_sum, fft_peak_frequency)
 
+            print(f"Sending UDP-Packet: {udp_packet.hex()}")
             # Send Package to WLED
             udp_socket.sendto(udp_packet, (WLED_IP_ADDRESS, WLED_UDP_PORT))
 
